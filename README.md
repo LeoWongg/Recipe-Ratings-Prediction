@@ -1,16 +1,16 @@
 # The Rise of Protein Obsession
 
-## Do protein-forward recipes earn better ratings?
+## Do protein-focused recipes earn better ratings?
 
 *Leo Wong*
 
-Protein is everywhere in contemporary food culture: recipe titles, meal plans, and nutrition labels all treat it as a selling point. This project asks whether that label corresponds to a difference in how Food.com users rate a recipe—and whether recipe metadata can predict those ratings at all.
+The rise of the "protein crave" is starting to become more and more apparent. Companies are beginning to supplement protein into anything and everything possible, whether it be protein ice cream, protein chips, or even protein-infused water, it's clear that protein related things are starting to gain positive traction. If it is possible to market even such unhealthy junk food like ice cream and chips into something that people look to as a "healthy alternative" because it's "protein", how would this affect actual complete meals? Thus, my question is simple: Does a recipe being "protein focused" affect its rating?
 
 ---
 
 ## Introduction
 
-I analyze Food.com recipe metadata and user interactions. The recipes file contains 83,782 recipes, and the interactions file contains 731,927 user-recipe interactions. The central question is: do recipes whose title or tags mention protein (while excluding `low-protein`) receive different average ratings than other recipes? It is useful because popularity claims around protein are easy to make, while community feedback lets us test whether a measurable rating difference accompanies the label.
+I analyzed Food.com recipes and user interactions. The recipes file contains 83,782 recipes, and the interactions file contains 731,927 user-recipe interactions. The central question is: do recipes whose title or tags mention protein (while excluding `low-protein`) receive different average ratings than other recipes? It is useful because popularity claims around protein are easy to make, while community feedback lets us test whether a measurable rating difference accompanies the label.
 
 Each row of the cleaned analysis data represents one recipe. I merge the interaction data into the recipe data to obtain each recipe's mean nonzero user rating.
 
