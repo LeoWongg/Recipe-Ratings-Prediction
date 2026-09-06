@@ -3,5 +3,4 @@ description: An interactive Food.com recipe-rating analysis by Leo Wong
 remote_theme: pages-themes/minimal@v0.2.0
 plugins:
   - jekyll-remote-theme
-logo: /assets/protein-icon.svg
 show_downloads: false
