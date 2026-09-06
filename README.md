@@ -1,6 +1,6 @@
 # The Rise of Protein Obsession
 
-## Did protein-focused recipes earn better ratings?
+## Do protein-focused recipes earn better ratings?
 
 *Leo Wong*
 
@@ -10,24 +10,24 @@ The rise of the “protein crave” had become increasingly apparent. Companies 
 
 ## Introduction
 
-I analyzed Food.com recipes and user interactions. The recipes file contained 83,782 recipes, and the interactions file contained 731,927 user-recipe interactions. The central question was: did recipes whose title or tags mentioned protein, while excluding `low-protein`, receive different average ratings than other recipes? This question was useful because popularity claims around protein were easy to make, while community feedback allowed me to test whether a measurable rating difference accompanied the label.
+I analyzed Food.com recipes and user interactions. The recipes dataset comprised 83,782 recipes, while the user interaction data had 731,927 user and recipe interactions. My hypothesis was: do recipes whose titles or tags include protein but exclude low-protein recipes have higher average ratings compared to other recipes? This question was helpful to explore because claims about the popularity of protein are easy to find, while the user reviews gave room to see if there was any real rating difference.
 
-Each row of the cleaned analysis data represented one recipe. I merged the interaction data into the recipe data to obtain each recipe's mean nonzero user rating.
+Each record in the cleaned data for analysis represents one recipe. To calculate the average rating of each recipe, the interaction data was merged into the recipes data.
 
 | Column | Meaning |
 |---|---|
-| `id` | Unique recipe identifier used to join ratings to recipes |
-| `rating` | Mean of the recipe's nonzero user ratings (1–5) |
-| `name`, `tags` | Recipe text used to construct the protein-focus indicator |
-| `protein`, `calories` | Nutrition values supplied with a recipe |
-| `n_steps`, `n_ingredients`, `minutes` | Recipe complexity and preparation metadata |
-| `is_protein_focused` | Whether `protein` occurs in the name or tags, excluding `low-protein` |
+| id | Unique recipe identifier used to join ratings to recipes |
+| rating | Mean of the recipe's nonzero user ratings (1 to 5) |
+| name, tags | Recipe text used to construct the protein-focus indicator |
+| protein, calories | Nutrition values supplied with a recipe |
+| n_steps, n_ingredients, minutes | Recipe complexity and preparation metadata |
+| is_protein_focused | Whether protein occurs in the name or tags, excluding low-protein |
 
 ## Data Cleaning and Exploratory Data Analysis
 
-I left-merged recipes with interactions (`id` ↔ `recipe_id`) so recipes without usable feedback remained identifiable. Food.com used a rating of 0 for an interaction where no rating was supplied; because the rating scale itself was 1–5, I replaced these zeros with missing values before computing each recipe's mean rating. This prevented a missing rating from being treated as an extremely negative review.
+I left-merged with the interactions dataset (id matching recipe_id) so that recipes without ratings were still identifiable. Food.com used a 0 for an interaction that had no rating. Because the actual ratings scale was 1 to 5, I converted these zeros to null values to make sure that a missing value was not mistaken for an especially bad review.
 
-The original `nutrition` column was a string representation of a seven-item list. I split it into numeric `calories`, `total_fat`, `sugar`, `sodium`, `protein`, `saturated_fat`, and `carbohydrates` columns. I also converted `submitted` to datetime. Finally, I created `is_protein_focused`: it was true when *protein* appeared in the recipe name or tags, except when the mention was *low-protein*. That exclusion mattered because a low-protein dietary tag was conceptually the opposite of a protein-forward recipe.
+The original nutrition row was stored as a string representation of a list with seven elements. I parsed out these elements into numeric columns for calories, total_fat, sugar, sodium, protein, saturated_fat, and carbohydrates. I also converted the submitted date into a standard datetime format. Lastly, I created a feature called is_protein_focused that was set to true when protein occurred in either the name or tags, but only when it was not low-protein. This distinction was necessary because a low-protein dietary preference is the exact opposite of a protein-focused recipe.
 
 This was a compact view of the cleaned recipe-level data.
 
@@ -43,13 +43,13 @@ This was a compact view of the cleaned recipe-level data.
 
 <iframe src="assets/rating-distribution.html" width="100%" height="520" frameborder="0" title="Interactive histogram of average recipe ratings"></iframe>
 
-Average ratings were concentrated near the top of the 1–5 scale, especially at 5. This ceiling-heavy distribution meant that even a real difference between recipe groups could have been small in raw rating points.
+Average ratings were concentrated near the top of the 1 to 5 scale, especially at 5. This ceiling-heavy distribution meant that even a real difference between recipe groups could have been small in raw rating points.
 
 ### Protein and calories
 
 <iframe src="assets/protein-calories.html" width="100%" height="560" frameborder="0" title="Interactive scatter plot of protein and calories"></iframe>
 
-Among recipes below 1,500 calories and 120 g of protein, protein tended to rise with calories. Protein-focused recipes appeared more often in the higher-protein region, but the substantial overlap showed that the text/tag indicator was not a substitute for the numeric nutrition label.
+Among recipes below 1,500 calories and 120 g of protein, protein tended to rise with calories. Protein-focused recipes appeared more often in the higher-protein region, but the substantial overlap showed that the text and tag indicator was not a substitute for the numeric nutrition label.
 
 ### Grouped recipe profile
 
@@ -62,56 +62,56 @@ Protein-focused recipes contained much more listed protein and somewhat more cal
 
 ## Assessment of Missingness
 
-There were 2,609 recipes without a usable average rating after zero ratings were treated as missing. I believed `rating` may have been MNAR: users' willingness to leave a rating could plausibly have depended on their unobserved opinion of the recipe. For example, an indifferent user may have been less motivated to rate at all. Review-prompt exposure, whether a user cooked the recipe, and user-level rating habits would have been valuable additional data; conditioning on such variables could have helped explain the missingness and made an MAR explanation more plausible.
+There were 2,609 recipes without useful mean ratings after treating zero ratings as missing. I hypothesized that rating could be MNAR, meaning the willingness of the user to leave a rating could depend on their unobserved perception of the recipe. For instance, user indifference could lead someone not to rate the recipe at all. To better understand this mechanism, it would have been helpful to know whether there was a review prompt, whether the user actually prepared the recipe, and their individual tendencies when rating food.
 
-For dependency testing, I used the absolute difference in means between recipes whose rating was missing and present, then compared it with 1,000 permutations of the missingness indicator.
+To test for dependency, I took the absolute difference of means between recipes with missing and non-missing ratings, and I compared it against 1,000 permutations of the missingness indicator.
 
 <iframe src="assets/missingness-permutation.html" width="100%" height="520" frameborder="0" title="Interactive permutation distribution for rating missingness and ingredients"></iframe>
 
-Rating missingness depended on `n_ingredients`: the observed difference in mean ingredient count was 0.2542, with permutation p < 0.001. The observed value lay far beyond the simulated null differences, so at α = 0.05 I rejected independence for these variables.
+Missingness on the rating depended on the number of ingredients, with an observed difference in the means of 0.2542 and a permutation p-value less than 0.001. Because the observed value was far from the null distribution of differences, I rejected independence between these two variables at a significance level of 0.05.
 
-As a contrast, rating missingness did not show evidence of dependence on `is_protein_focused`. The absolute difference in the proportion of protein-focused recipes was 0.0039, with permutation p = 0.289. At α = 0.05, I failed to reject independence; the small difference was compatible with random assignment of missingness labels.
+On the other hand, there was no sign of dependence between missingness on the rating and is_protein_focused. The observed absolute difference in the proportion of protein-focused recipes was 0.0039 with a permutation p-value of 0.289. Therefore, at a significance level of 0.05, I failed to reject independence.
 
 ## Hypothesis Testing
 
 I tested whether protein-forward labeling was associated with a different average rating.
 
-- Null hypothesis: protein-focused recipes and other recipes had the same mean average rating; any observed difference was due to random assignment of the protein-focus labels.
+- Null hypothesis: protein-focused recipes and other recipes had the same mean average rating, and any observed difference was due to random assignment of the protein-focus labels.
 - Alternative hypothesis: protein-focused recipes and other recipes had different mean average ratings.
 - Test statistic: absolute difference in group mean ratings.
 - Significance level: α = 0.05.
 
-The protein-focused mean was 4.6286 and the other-recipe mean was 4.6253, giving an observed difference of 0.0034. A 1,000-permutation test gave p = 0.783. Because this was much larger than 0.05, I failed to reject the null hypothesis. In this dataset, the tiny observed difference was consistent with random variation; it was not evidence that protein-focused recipes received systematically different average ratings.
+The protein-focused mean was 4.6286 and the other-recipe mean was 4.6253, giving an observed difference of 0.0034. A 1,000-permutation test gave p = 0.783. Because this was much larger than 0.05, I failed to reject the null hypothesis. In this dataset, the tiny observed difference was consistent with random variation. It was not evidence that protein-focused recipes received systematically different average ratings.
 
 ## Framing a Prediction Problem
 
-The prediction task was to estimate a recipe's average user `rating`, so this was a regression problem. Ratings were continuous recipe-level averages between 1 and 5, and the target directly captured the outcome discussed in the central question.
+The goal was to predict the average user rating for a recipe, making this a regression problem. The ratings were continuous recipe averages on a scale from 1 to 5, and the target variable represented the exact output of interest in our guiding question.
 
-I reported mean squared error (MSE) as the primary metric and also reported R². MSE was appropriate because larger misses on a compact 1–5 scale should have counted more heavily than small misses; R² complemented it by measuring performance against predicting the overall mean. At prediction time, a recipe's posted metadata—nutrition, minutes, steps, ingredient count, tags, and name—was available. I excluded later user reviews, interaction dates, rating counts, and the rating itself to avoid leakage.
+Mean squared error (MSE) was the evaluation metric chosen alongside R². This choice was justified because larger errors on the tighter 1 to 5 scale should be penalized more heavily than smaller errors, while R² helped assess how well the model performed compared to simply predicting the mean rating. During prediction, only the metadata of the recipe was used, including nutrition facts, minutes, steps, number of ingredients, tags, and name.
 
 ## Baseline Model
 
-The baseline was a `Pipeline` with `StandardScaler` followed by `LinearRegression`. It used two quantitative features: `n_steps` and `n_ingredients`. Standardizing put the two counts on comparable scales before the linear model estimated their relationship with average rating.
+The baseline model was an sklearn Pipeline that first scaled the predictors using StandardScaler and then trained a LinearRegression model. The two predictors used were n_steps and n_ingredients.
 
-On an 80/20 train/test split (random state 42), the baseline obtained test MSE = 0.4045 and test R² = −0.0004. This was not a useful predictor: its negative R² meant it performed marginally worse than simply predicting the training-set mean rating. Recipe complexity alone contained almost no linear signal for these highly concentrated ratings.
+Using an 80/20 train/test split with random state 42, the baseline model yielded an MSE of 0.4045 and an R² of -0.0004 on the test set. This was not a strong predictor, as indicated by the negative R² value, which showed that the model was slightly less accurate than simply predicting the mean rating of the training set.
 
 ## Final Model
 
-The final `Pipeline` applied a `ColumnTransformer` and a `RandomForestRegressor`. It retained the complexity variables and added the engineered quantitative feature protein per calorie (`protein / (calories + 1)`), which distinguished calorie-dense recipes from recipes whose calories were more protein-dense. It also added the nominal protein-focus indicator, one-hot encoded, to capture a text/tag-based dietary signal that was not identical to the nutrition value. Minutes were restricted to 300 or fewer before modeling to prevent a small number of implausibly long durations from dominating the scale.
+The final Pipeline used ColumnTransformer and RandomForestRegressor. It retained all complexity attributes and added a new quantitative attribute called protein per calories, calculated as protein divided by calories plus one, to distinguish calorie-dense recipes from protein-dense recipes. I also retained the binary protein-focus indicator, which was one-hot encoded to include a text and tag-based nutrition signal separate from the raw nutritional value. Recipe duration was filtered to 300 minutes or less before fitting.
 
-I tuned `n_estimators` (50, 100), `max_depth` (5, 10), and `min_samples_split` (5, 10) with 3-fold `GridSearchCV` on the training set using negative MSE. The best model used 100 trees, maximum depth 5, and minimum split size 5. Its held-out performance was MSE = 0.4116 and R² = 0.0034.
+I optimized n_estimators (50, 100), max_depth (5, 10), and min_samples_split (5, 10) with 3-fold GridSearchCV on the training set using negative MSE. The best model had 100 trees, a maximum depth of 5, and a minimum split size of 5. This optimization produced a test MSE of 0.4116 and an R² of 0.0034.
 
-The final model captured a tiny amount of variance (R² rose from −0.0004 to 0.0034), but its MSE was not lower than the baseline's; moreover, the final preprocessing removed extreme-duration rows, so the two reported scores were not a perfectly like-for-like comparison. The responsible conclusion was that these pre-submission metadata features provided extremely limited rating predictability, not that the final model was practically strong.
+Although this model explained very little variance (with R² moving from -0.0004 to 0.0034), its MSE was not an improvement over the baseline. Furthermore, the pre-processing used in the final model removed rows with extreme duration values, meaning the metrics cannot be compared identically. The main takeaway is that these submission-time metadata features predict recipe ratings very weakly.
 
 ## Fairness Analysis
 
-I assessed whether the final model's errors differed for protein-focused recipes (name/tags included protein, excluding low-protein) and other recipes. The group metric was test-set MSE, and the test statistic was the absolute difference between the groups' MSE values.
+An analysis was performed to evaluate whether model errors differed for protein recipes (where name or tags contained protein, excluding low protein) versus other recipes. The evaluation metric was test set MSE, and the test statistic was the absolute difference in MSE between the two groups.
 
-- Null hypothesis: the model was fair with respect to these groups; any MSE difference was due to chance.
-- Alternative hypothesis: the model was not fair with respect to these groups; the groups had different MSE.
+- Null hypothesis: the model was fair with respect to these groups, and any MSE difference was due to chance.
+- Alternative hypothesis: the model was not fair with respect to these groups, and the groups had different MSE.
 - Significance level: α = 0.05.
 
-The protein-focused group had MSE 0.3856 and the other-recipe group had MSE 0.4124, an absolute difference of 0.0267. A 1,000-permutation test gave p = 0.677. I therefore failed to reject the null hypothesis: this analysis did not provide evidence that the model's squared errors differed by protein-focus group. This was not proof of fairness; it meant the observed gap was plausible under the permutation null with this sample and metric.
+The MSE for the protein recipe group was 0.3856, while the MSE for the other recipe group was 0.4124, resulting in an absolute difference of 0.0267. A 1,000-iteration permutation test yielded a p-value of 0.677. Because this value is well above 0.05, we fail to reject the null hypothesis, and there is no evidence that the model squared errors differ between protein-focused and standard recipes.
 
 ---
 
